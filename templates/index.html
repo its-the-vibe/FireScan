@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FireScan</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; margin: 0; background: #f5f5f5; color: #222; }
+    header { background: #e55a00; color: #fff; padding: 1rem 2rem; }
+    header h1 { margin: 0; font-size: 1.6rem; }
+    header p { margin: 0.2rem 0 0; font-size: 0.9rem; opacity: 0.85; }
+    main { padding: 2rem; max-width: 900px; margin: 0 auto; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+    th { background: #e55a00; color: #fff; text-align: left; padding: 0.75rem 1rem; }
+    td { padding: 0.75rem 1rem; border-bottom: 1px solid #eee; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fff8f5; }
+    a { color: #e55a00; text-decoration: none; font-weight: 600; }
+    a:hover { text-decoration: underline; }
+    .count { text-align: right; font-variant-numeric: tabular-nums; }
+    .empty { text-align: center; padding: 3rem; color: #888; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🔥 FireScan</h1>
+    <p>Firestore collection browser &mdash; project: <strong>{{.ProjectID}}</strong></p>
+  </header>
+  <main>
+    {{if .Collections}}
+    <table>
+      <thead>
+        <tr><th>Collection</th><th class="count">Documents</th></tr>
+      </thead>
+      <tbody>
+        {{range .Collections}}
+        <tr>
+          <td><a href="/collection/{{.Name}}">{{.Name}}</a></td>
+          <td class="count">{{.Count}}</td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+    {{else}}
+    <p class="empty">No collections configured. Add collection names to <code>config.yaml</code>.</p>
+    {{end}}
+  </main>
+</body>
+</html>

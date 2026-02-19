@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{.Collection}} &mdash; FireScan</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; margin: 0; background: #f5f5f5; color: #222; }
+    header { background: #e55a00; color: #fff; padding: 1rem 2rem; display: flex; align-items: center; gap: 1rem; }
+    header h1 { margin: 0; font-size: 1.4rem; }
+    header a { color: #ffe0cc; font-size: 0.9rem; text-decoration: none; }
+    header a:hover { text-decoration: underline; }
+    main { padding: 2rem; max-width: 1200px; margin: 0 auto; }
+    .meta { margin-bottom: 1rem; color: #555; font-size: 0.9rem; }
+    .doc-card { background: #fff; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.12); margin-bottom: 1.2rem; overflow: hidden; }
+    .doc-header { background: #fdf0e8; padding: 0.5rem 1rem; font-size: 0.85rem; color: #555; display: flex; justify-content: space-between; }
+    .doc-id { font-weight: 700; color: #222; }
+    pre { margin: 0; padding: 1rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+    .pagination { display: flex; gap: 0.75rem; align-items: center; margin-top: 1.5rem; }
+    .btn { padding: 0.5rem 1.2rem; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: background 0.15s; }
+    .btn-primary { background: #e55a00; color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #c44e00; }
+    .btn-secondary { background: #eee; color: #333; }
+    .btn-secondary:hover:not(:disabled) { background: #ddd; }
+    .btn:disabled { opacity: 0.4; cursor: default; }
+    .page-info { flex: 1; text-align: center; color: #666; font-size: 0.9rem; }
+    .shortcut-hint { font-size: 0.75rem; color: #aaa; margin-top: 0.3rem; text-align: center; }
+    .empty { text-align: center; padding: 3rem; color: #888; }
+    kbd { background: #eee; border: 1px solid #ccc; border-radius: 3px; padding: 1px 5px; font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <a href="/">&larr; Collections</a>
+      <h1>{{.Collection}}</h1>
+    </div>
+  </header>
+  <main>
+    <p class="meta">
+      Showing page {{.Page}} &mdash; {{.Total}} document(s) loaded, ordered by <strong>timestamp</strong> (newest first)
+    </p>
+
+    {{if .Docs}}
+      {{range .Docs}}
+      <div class="doc-card">
+        <div class="doc-header">
+          <span class="doc-id">{{.ID}}</span>
+          {{if .Timestamp}}<span>{{.Timestamp}}</span>{{end}}
+        </div>
+        <pre>{{.JSON}}</pre>
+      </div>
+      {{end}}
+    {{else}}
+      <p class="empty">No documents found in this collection.</p>
+    {{end}}
+
+    <div class="pagination">
+      <button class="btn btn-secondary" id="btn-prev" onclick="navigate(-1)" {{if not .HasPrev}}disabled{{end}}>
+        &larr; Previous
+      </button>
+      <div>
+        <div class="page-info">Page {{.Page}} of {{.TotalPages}}</div>
+        <div class="shortcut-hint"><kbd>&larr;</kbd> / <kbd>&rarr;</kbd> to page</div>
+      </div>
+      <button class="btn btn-primary" id="btn-next" onclick="navigate(1)" {{if not .HasNext}}disabled{{end}}>
+        Next &rarr;
+      </button>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      var hasPrev = {{.HasPrev}};
+      var hasNext = {{.HasNext}};
+      var page    = {{.Page}};
+      var collection = "{{.Collection | js}}";
+
+      function navigate(delta) {
+        var next = page + delta;
+        if (next < 1) return;
+        window.location.href = '/collection/' + encodeURIComponent(collection) + '?page=' + next;
+      }
+
+      document.addEventListener('keydown', function (e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if ((e.key === 'ArrowRight' || e.key === 'l') && hasNext) navigate(1);
+        if ((e.key === 'ArrowLeft'  || e.key === 'h') && hasPrev) navigate(-1);
+      });
+    })();
+  </script>
+</body>
+</html>
