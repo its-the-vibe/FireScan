@@ -1,0 +1,22 @@
+# FireScan configuration example
+# Copy this file to config.yaml and fill in your values.
+# config.yaml is gitignored and should never be committed.
+
+# GCP project ID
+project_id: "my-gcp-project"
+
+# Path to the GCP service account credentials JSON file.
+# Leave empty to use Application Default Credentials (ADC).
+credentials_file: "/path/to/credentials.json"
+
+# Number of documents to preload per page
+batch_size: 25
+
+# HTTP port the server will listen on
+port: 8080
+
+# List of Firestore collection names to expose
+collections:
+  - users
+  - orders
+  - products

@@ -30,3 +30,9 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# FireScan config (use config.example.yaml as a template)
+config.yaml
+
+# FireScan binary
+firescan
