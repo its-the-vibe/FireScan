@@ -4,12 +4,12 @@ services:
     image: firescan:latest
     read_only: true
     ports:
-      - "8080:8080"
+      - "${PORT:-8080}:8080"
     volumes:
       # Mount the config file (read-only)
       - ./config.yaml:/config.yaml:ro
       # Mount GCP credentials (read-only) — adjust the path as needed
-      - ${GOOGLE_APPLICATION_CREDENTIALS:-/dev/null}:/credentials.json:ro
+      # - ${GOOGLE_APPLICATION_CREDENTIALS:-/dev/null}:/credentials.json:ro
     environment:
       CONFIG_FILE: /config.yaml
-    restart: unless-stopped
+    restart: on-failure:10

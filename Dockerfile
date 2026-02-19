@@ -1,5 +1,5 @@
 # Stage 1: build
-FROM golang:1.24-alpine AS builder
+FROM golang:1.26.0-alpine AS builder
 
 WORKDIR /src
 
@@ -12,8 +12,7 @@ COPY main.go ./
 COPY templates/ ./templates/
 
 # Build a fully static binary
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
-    go build -trimpath -ldflags="-s -w" -o /firescan .
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /firescan .
 
 # Stage 2: minimal runtime image
 FROM scratch
