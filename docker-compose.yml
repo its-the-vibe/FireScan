@@ -9,7 +9,7 @@ services:
       # Mount the config file (read-only)
       - ./config.yaml:/config.yaml:ro
       # Mount GCP credentials (read-only) — adjust the path as needed
-      # - ${GOOGLE_APPLICATION_CREDENTIALS:-/dev/null}:/credentials.json:ro
+      - ${GOOGLE_APPLICATION_CREDENTIALS:-./credentials.json}:/credentials.json:ro
     environment:
       CONFIG_FILE: /config.yaml
     restart: on-failure:10
