@@ -36,3 +36,5 @@ config.yaml
 
 # FireScan binary
 firescan
+
+credentials.json
