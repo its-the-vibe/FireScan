@@ -38,7 +38,7 @@
     </div>
   </header>
   <main>
-    <p class="meta">
+    <p class="meta" id="meta-info">
       Record {{.Page}} of {{.Total}} &mdash; ordered by <strong>timestamp</strong> (newest first)
     </p>
 
@@ -55,14 +55,14 @@
     {{end}}
 
     <div class="pagination">
-      <button class="btn btn-secondary" id="btn-prev" onclick="navigate(-1)" {{if not .HasPrev}}disabled{{end}}>
+      <button class="btn btn-secondary" id="btn-prev" {{if not .HasPrev}}disabled{{end}}>
         &larr; Previous
       </button>
       <div>
         <div class="page-info" id="page-info">Record {{.Page}} of {{.Total}}</div>
         <div class="shortcut-hint"><kbd>&larr;</kbd> / <kbd>&rarr;</kbd> to navigate</div>
       </div>
-      <button class="btn btn-primary" id="btn-next" onclick="navigate(1)" {{if not .HasNext}}disabled{{end}}>
+      <button class="btn btn-primary" id="btn-next" {{if not .HasNext}}disabled{{end}}>
         Next &rarr;
       </button>
     </div>
@@ -88,11 +88,12 @@
           document.getElementById('doc-json').textContent = doc.JSON;
         }
 
+        document.getElementById('meta-info').innerHTML =
+          'Record ' + r + ' of ' + total + ' \u2014 ordered by <strong>timestamp</strong> (newest first)';
         document.getElementById('page-info').textContent = 'Record ' + r + ' of ' + total;
         document.getElementById('btn-prev').disabled = r <= 1;
         document.getElementById('btn-next').disabled = r >= total;
 
-        history.pushState({record: r}, '', '/collection/' + encodeURIComponent(collection) + '?page=' + r);
         record = r;
       }
 
@@ -107,22 +108,13 @@
         }
       }
 
+      document.getElementById('btn-prev').addEventListener('click', function () { navigate(-1); });
+      document.getElementById('btn-next').addEventListener('click', function () { navigate(1); });
+
       document.addEventListener('keydown', function (e) {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
         if ((e.key === 'ArrowRight' || e.key === 'l') && record < total) navigate(1);
         if ((e.key === 'ArrowLeft'  || e.key === 'h') && record > 1) navigate(-1);
-      });
-
-      window.addEventListener('popstate', function (e) {
-        if (e.state && e.state.record) {
-          var r = e.state.record;
-          var idx = r - batchStart;
-          if (idx >= 0 && idx < batchDocs.length) {
-            showRecord(r);
-          } else {
-            window.location.reload();
-          }
-        }
       });
     })();
   </script>
