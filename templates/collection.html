@@ -13,7 +13,7 @@
     header a:hover { text-decoration: underline; }
     main { padding: 2rem; max-width: 1200px; margin: 0 auto; }
     .meta { margin-bottom: 1rem; color: #555; font-size: 0.9rem; }
-    .doc-card { background: #fff; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.12); margin-bottom: 1.2rem; overflow: hidden; }
+    .doc-card { background: #fff; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.12); overflow: hidden; }
     .doc-header { background: #fdf0e8; padding: 0.5rem 1rem; font-size: 0.85rem; color: #555; display: flex; justify-content: space-between; }
     .doc-id { font-weight: 700; color: #222; }
     pre { margin: 0; padding: 1rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
@@ -38,33 +38,31 @@
     </div>
   </header>
   <main>
-    <p class="meta">
-      Showing page {{.Page}} &mdash; {{.Total}} document(s) loaded, ordered by <strong>timestamp</strong> (newest first)
+    <p class="meta" id="meta-info">
+      Record {{.Page}} of {{.Total}} &mdash; ordered by <strong>timestamp</strong> (newest first)
     </p>
 
-    {{if .Docs}}
-      {{range .Docs}}
-      <div class="doc-card">
+    {{if .CurrentDoc.ID}}
+      <div class="doc-card" id="doc-card">
         <div class="doc-header">
-          <span class="doc-id">{{.ID}}</span>
-          {{if .Timestamp}}<span>{{.Timestamp}}</span>{{end}}
+          <span class="doc-id" id="doc-id">{{.CurrentDoc.ID}}</span>
+          <span id="doc-timestamp">{{.CurrentDoc.Timestamp}}</span>
         </div>
-        <pre>{{.JSON}}</pre>
+        <pre id="doc-json">{{.CurrentDoc.JSON}}</pre>
       </div>
-      {{end}}
     {{else}}
-      <p class="empty">No documents found in this collection.</p>
+      <p class="empty" id="doc-empty">No documents found in this collection.</p>
     {{end}}
 
     <div class="pagination">
-      <button class="btn btn-secondary" id="btn-prev" onclick="navigate(-1)" {{if not .HasPrev}}disabled{{end}}>
+      <button class="btn btn-secondary" id="btn-prev" {{if not .HasPrev}}disabled{{end}}>
         &larr; Previous
       </button>
       <div>
-        <div class="page-info">Page {{.Page}} of {{.TotalPages}}</div>
-        <div class="shortcut-hint"><kbd>&larr;</kbd> / <kbd>&rarr;</kbd> to page</div>
+        <div class="page-info" id="page-info">Record {{.Page}} of {{.Total}}</div>
+        <div class="shortcut-hint"><kbd>&larr;</kbd> / <kbd>&rarr;</kbd> to navigate</div>
       </div>
-      <button class="btn btn-primary" id="btn-next" onclick="navigate(1)" {{if not .HasNext}}disabled{{end}}>
+      <button class="btn btn-primary" id="btn-next" {{if not .HasNext}}disabled{{end}}>
         Next &rarr;
       </button>
     </div>
@@ -72,21 +70,51 @@
 
   <script>
     (function () {
-      var hasPrev = {{.HasPrev}};
-      var hasNext = {{.HasNext}};
-      var page    = {{.Page}};
+      var batchDocs  = {{.DocsJSON}};
+      var batchStart = {{.BatchStart}};
+      var total      = {{.Total}};
+      var record     = {{.Page}};
       var collection = "{{.Collection | js}}";
 
-      function navigate(delta) {
-        var next = page + delta;
-        if (next < 1) return;
-        window.location.href = '/collection/' + encodeURIComponent(collection) + '?page=' + next;
+      function showRecord(r) {
+        var idx = r - batchStart;
+        if (idx < 0 || idx >= batchDocs.length) return;
+        var doc = batchDocs[idx];
+
+        var card = document.getElementById('doc-card');
+        if (card) {
+          document.getElementById('doc-id').textContent = doc.ID;
+          document.getElementById('doc-timestamp').textContent = doc.Timestamp || '';
+          document.getElementById('doc-json').textContent = doc.JSON;
+        }
+
+        document.getElementById('meta-info').innerHTML =
+          'Record ' + r + ' of ' + total + ' \u2014 ordered by <strong>timestamp</strong> (newest first)';
+        document.getElementById('page-info').textContent = 'Record ' + r + ' of ' + total;
+        document.getElementById('btn-prev').disabled = r <= 1;
+        document.getElementById('btn-next').disabled = r >= total;
+
+        record = r;
       }
+
+      function navigate(delta) {
+        var next = record + delta;
+        if (next < 1 || next > total) return;
+        var idx = next - batchStart;
+        if (idx >= 0 && idx < batchDocs.length) {
+          showRecord(next);
+        } else {
+          window.location.href = '/collection/' + encodeURIComponent(collection) + '?page=' + next;
+        }
+      }
+
+      document.getElementById('btn-prev').addEventListener('click', function () { navigate(-1); });
+      document.getElementById('btn-next').addEventListener('click', function () { navigate(1); });
 
       document.addEventListener('keydown', function (e) {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-        if ((e.key === 'ArrowRight' || e.key === 'l') && hasNext) navigate(1);
-        if ((e.key === 'ArrowLeft'  || e.key === 'h') && hasPrev) navigate(-1);
+        if ((e.key === 'ArrowRight' || e.key === 'l') && record < total) navigate(1);
+        if ((e.key === 'ArrowLeft'  || e.key === 'h') && record > 1) navigate(-1);
       });
     })();
   </script>

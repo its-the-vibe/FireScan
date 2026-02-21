@@ -92,13 +92,16 @@ func TestTemplatesParse(t *testing.T) {
 	if err := tmpl.ExecuteTemplate(&buf, "collection.html", collectionData{
 		Collection: "users",
 		Page:       1,
-		TotalPages: 3,
+		TotalPages: 75,
 		Total:      75,
 		HasPrev:    false,
 		HasNext:    true,
 		Docs: []docInfo{
 			{ID: "abc123", JSON: `{"name": "Alice"}`, Timestamp: "2024-01-01T00:00:00Z"},
 		},
+		BatchStart: 1,
+		CurrentDoc: docInfo{ID: "abc123", JSON: `{"name": "Alice"}`, Timestamp: "2024-01-01T00:00:00Z"},
+		DocsJSON:   template.JS(`[{"ID":"abc123","JSON":"{\"name\": \"Alice\"}","Timestamp":"2024-01-01T00:00:00Z"}]`),
 	}); err != nil {
 		t.Fatalf("collection.html template execution failed: %v", err)
 	}

@@ -51,12 +51,15 @@ type indexData struct {
 // collectionData is passed to the collection template.
 type collectionData struct {
 	Collection string
-	Page       int
-	TotalPages int
-	Total      int
+	Page       int          // current record number (1-based)
+	TotalPages int          // total records (same as Total; kept for compatibility)
+	Total      int          // total documents in the collection
 	HasPrev    bool
 	HasNext    bool
-	Docs       []docInfo
+	Docs       []docInfo    // full preloaded batch for client-side navigation
+	BatchStart int          // 1-based record number of the first doc in Docs
+	CurrentDoc docInfo      // the single record displayed on this page
+	DocsJSON   template.JS  // JSON-encoded Docs for in-batch JS navigation
 }
 
 var (
@@ -156,7 +159,9 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	renderTemplate(w, "index.html", data)
 }
 
-// collectionHandler renders a paginated view of a Firestore collection.
+// collectionHandler renders a single-record view of a Firestore collection.
+// It preloads a full batch into memory so the client can navigate within the
+// batch instantly; a new network request is only made when paging past the batch.
 func collectionHandler(w http.ResponseWriter, r *http.Request) {
 	// Extract collection name from path: /collection/<name>
 	name := strings.TrimPrefix(r.URL.Path, "/collection/")
@@ -166,47 +171,59 @@ func collectionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	page := 1
+	// "page" in the URL represents the 1-based record number to display.
+	record := 1
 	if p := r.URL.Query().Get("page"); p != "" {
 		if n, err := strconv.Atoi(p); err == nil && n > 0 {
-			page = n
+			record = n
 		}
 	}
 
 	ctx := r.Context()
 
-	// Fetch one extra document to detect whether a next page exists.
-	offset := (page - 1) * cfg.BatchSize
-	docs, err := fetchDocuments(ctx, name, offset, cfg.BatchSize+1)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("error fetching documents: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	hasNext := len(docs) > cfg.BatchSize
-	if hasNext {
-		docs = docs[:cfg.BatchSize]
-	}
-
-	// Estimate total pages from a full count.
+	// Count total documents for HasPrev / HasNext and the record counter.
 	total, err := countDocuments(ctx, name)
 	if err != nil {
 		log.Printf("error counting %s: %v", name, err)
 		total = 0
 	}
-	totalPages := 1
-	if total > 0 {
-		totalPages = (total + cfg.BatchSize - 1) / cfg.BatchSize
+
+	// Determine which batch contains this record and fetch it.
+	// batchOffset is the 0-based collection offset of the first doc in the batch.
+	batchOffset := ((record - 1) / cfg.BatchSize) * cfg.BatchSize
+	docs, err := fetchDocuments(ctx, name, batchOffset, cfg.BatchSize)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("error fetching documents: %v", err), http.StatusInternalServerError)
+		return
+	}
+	if docs == nil {
+		docs = []docInfo{}
+	}
+
+	// Pick the doc that corresponds to the requested record number.
+	indexInBatch := (record - 1) - batchOffset // 0-based index within docs
+	var currentDoc docInfo
+	if indexInBatch >= 0 && indexInBatch < len(docs) {
+		currentDoc = docs[indexInBatch]
+	}
+
+	// Encode the entire batch as JSON for in-browser navigation.
+	docsJSON, err := json.Marshal(docs)
+	if err != nil {
+		docsJSON = []byte("[]")
 	}
 
 	data := collectionData{
 		Collection: name,
-		Page:       page,
-		TotalPages: totalPages,
+		Page:       record,
+		TotalPages: total,
 		Total:      total,
-		HasPrev:    page > 1,
-		HasNext:    hasNext,
+		HasPrev:    record > 1,
+		HasNext:    record < total,
 		Docs:       docs,
+		BatchStart: batchOffset + 1, // 1-based record number of the first doc in Docs
+		CurrentDoc: currentDoc,
+		DocsJSON:   template.JS(docsJSON),
 	}
 
 	renderTemplate(w, "collection.html", data)
