@@ -17,7 +17,7 @@
     .doc-header { background: #fdf0e8; padding: 0.5rem 1rem; font-size: 0.85rem; color: #555; display: flex; justify-content: space-between; }
     .doc-id { font-weight: 700; color: #222; }
     pre { margin: 0; padding: 1rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
-    .pagination { display: flex; gap: 0.75rem; align-items: center; margin-top: 1.5rem; }
+    .pagination { display: flex; gap: 0.75rem; align-items: center; margin-top: 1.5rem; margin-bottom: 1.5rem; }
     .btn { padding: 0.5rem 1.2rem; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: background 0.15s; }
     .btn-primary { background: #e55a00; color: #fff; }
     .btn-primary:hover:not(:disabled) { background: #c44e00; }
@@ -41,6 +41,19 @@
     <p class="meta" id="meta-info">
       Record {{.Page}} of {{.Total}} &mdash; ordered by <strong>timestamp</strong> (newest first)
     </p>
+
+    <div class="pagination">
+      <button class="btn btn-secondary" id="btn-prev-top" {{if not .HasPrev}}disabled{{end}}>
+        &larr; Previous
+      </button>
+      <div>
+        <div class="page-info" id="page-info-top">Record {{.Page}} of {{.Total}}</div>
+        <div class="shortcut-hint"><kbd>&larr;</kbd> / <kbd>&rarr;</kbd> to navigate</div>
+      </div>
+      <button class="btn btn-primary" id="btn-next-top" {{if not .HasNext}}disabled{{end}}>
+        Next &rarr;
+      </button>
+    </div>
 
     {{if .CurrentDoc.ID}}
       <div class="doc-card" id="doc-card">
@@ -91,8 +104,11 @@
         document.getElementById('meta-info').innerHTML =
           'Record ' + r + ' of ' + total + ' \u2014 ordered by <strong>timestamp</strong> (newest first)';
         document.getElementById('page-info').textContent = 'Record ' + r + ' of ' + total;
+        document.getElementById('page-info-top').textContent = 'Record ' + r + ' of ' + total;
         document.getElementById('btn-prev').disabled = r <= 1;
         document.getElementById('btn-next').disabled = r >= total;
+        document.getElementById('btn-prev-top').disabled = r <= 1;
+        document.getElementById('btn-next-top').disabled = r >= total;
 
         record = r;
       }
@@ -110,6 +126,8 @@
 
       document.getElementById('btn-prev').addEventListener('click', function () { navigate(-1); });
       document.getElementById('btn-next').addEventListener('click', function () { navigate(1); });
+      document.getElementById('btn-prev-top').addEventListener('click', function () { navigate(-1); });
+      document.getElementById('btn-next-top').addEventListener('click', function () { navigate(1); });
 
       document.addEventListener('keydown', function (e) {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
