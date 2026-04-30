@@ -51,15 +51,15 @@ type indexData struct {
 // collectionData is passed to the collection template.
 type collectionData struct {
 	Collection string
-	Page       int          // current record number (1-based)
-	TotalPages int          // total records (same as Total; kept for compatibility)
-	Total      int          // total documents in the collection
+	Page       int // current record number (1-based)
+	TotalPages int // total records (same as Total; kept for compatibility)
+	Total      int // total documents in the collection
 	HasPrev    bool
 	HasNext    bool
-	Docs       []docInfo    // full preloaded batch for client-side navigation
-	BatchStart int          // 1-based record number of the first doc in Docs
-	CurrentDoc docInfo      // the single record displayed on this page
-	DocsJSON   template.JS  // JSON-encoded Docs for in-batch JS navigation
+	Docs       []docInfo   // full preloaded batch for client-side navigation
+	BatchStart int         // 1-based record number of the first doc in Docs
+	CurrentDoc docInfo     // the single record displayed on this page
+	DocsJSON   template.JS // JSON-encoded Docs for in-batch JS navigation
 }
 
 var (
@@ -97,7 +97,7 @@ func main() {
 	// Build Firestore client options.
 	var clientOpts []option.ClientOption
 	if cfg.CredentialsFile != "" {
-		clientOpts = append(clientOpts, option.WithCredentialsFile(cfg.CredentialsFile))
+		clientOpts = append(clientOpts, option.WithAuthCredentialsFile(option.AuthorizedUser, cfg.CredentialsFile))
 	}
 
 	ctx := context.Background()
