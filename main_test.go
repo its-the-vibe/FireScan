@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"html/template"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 )
@@ -107,5 +109,80 @@ func TestTemplatesParse(t *testing.T) {
 	}
 	if buf.Len() == 0 {
 		t.Error("collection.html rendered empty output")
+	}
+}
+
+func TestLoadConfigFileNotFound(t *testing.T) {
+	err := loadConfig("/nonexistent/path/config.yaml")
+	if err == nil {
+		t.Error("expected error for nonexistent file, got nil")
+	}
+}
+
+func TestLoadConfigInvalidYAML(t *testing.T) {
+	f, err := os.CreateTemp("", "config-*.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(f.Name())
+	if _, err := f.WriteString(": invalid: yaml: {{{"); err != nil {
+		t.Fatal(err)
+	}
+	f.Close()
+
+	if err := loadConfig(f.Name()); err == nil {
+		t.Error("expected error for invalid YAML, got nil")
+	}
+}
+
+func TestIndexHandlerNotFound(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/other/path", nil)
+	w := httptest.NewRecorder()
+	indexHandler(w, req)
+	if w.Code != http.StatusNotFound {
+		t.Errorf("expected status 404, got %d", w.Code)
+	}
+}
+
+func TestCollectionHandlerEmptyName(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/collection/", nil)
+	w := httptest.NewRecorder()
+	collectionHandler(w, req)
+	if w.Code != http.StatusFound {
+		t.Errorf("expected redirect 302, got %d", w.Code)
+	}
+	if loc := w.Header().Get("Location"); loc != "/" {
+		t.Errorf("expected redirect to /, got %q", loc)
+	}
+}
+
+func TestRenderTemplate(t *testing.T) {
+	tmpl, err := template.New("").ParseGlob("templates/*.html")
+	if err != nil {
+		t.Fatalf("failed to parse templates: %v", err)
+	}
+	templates = tmpl
+
+	w := httptest.NewRecorder()
+	renderTemplate(w, "index.html", indexData{ProjectID: "test"})
+	if w.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", w.Code)
+	}
+	if ct := w.Header().Get("Content-Type"); ct != "text/html; charset=utf-8" {
+		t.Errorf("expected content-type text/html; charset=utf-8, got %q", ct)
+	}
+}
+
+func TestRenderTemplateInvalidTemplate(t *testing.T) {
+	tmpl, err := template.New("").ParseGlob("templates/*.html")
+	if err != nil {
+		t.Fatalf("failed to parse templates: %v", err)
+	}
+	templates = tmpl
+
+	w := httptest.NewRecorder()
+	renderTemplate(w, "nonexistent.html", nil)
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("expected status 500 for unknown template, got %d", w.Code)
 	}
 }
