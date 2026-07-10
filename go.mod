@@ -4,7 +4,7 @@ go 1.26.5
 
 require (
 	cloud.google.com/go/firestore v1.23.0
-	google.golang.org/api v0.287.1
+	google.golang.org/api v0.288.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
