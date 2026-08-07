@@ -3,7 +3,7 @@ module github.com/its-the-vibe/firescan
 go 1.26.5
 
 require (
-	cloud.google.com/go/firestore v1.24.0
+	cloud.google.com/go/firestore v1.25.0
 	google.golang.org/api v0.292.0
 	gopkg.in/yaml.v3 v3.0.1
 )
