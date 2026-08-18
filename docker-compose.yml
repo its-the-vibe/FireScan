@@ -4,13 +4,18 @@ services:
     image: ghcr.io/its-the-vibe/firescan:latest
     pull_policy: always
     read_only: true
+    # Run as the host user so bind-mounted credential files (e.g. mode 600) are readable.
+    # Export UID/GID before running: export UID GID
+    user: "${UID:-65532}:${GID:-65532}"
     ports:
       - "${PORT:-8080}:8080"
     volumes:
       # Mount the config file (read-only)
       - ./config.yaml:/config.yaml:ro
-      # Mount GCP credentials (read-only) — adjust the path as needed
+      # Mount GCP credentials (read-only).
+      # Supports mode-600 host files because the container runs as the host user (see `user:` above).
       - ${GOOGLE_APPLICATION_CREDENTIALS:-./credentials.json}:/credentials.json:ro
     environment:
       CONFIG_FILE: /config.yaml
+      GOOGLE_APPLICATION_CREDENTIALS: /credentials.json
     restart: on-failure:10

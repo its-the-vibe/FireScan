@@ -20,9 +20,9 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldfl
 # Stage 2: distroless runtime image
 FROM gcr.io/distroless/static-debian13:nonroot
 
-# Copy the binary and templates
-COPY --from=builder /firescan /firescan
-COPY --from=builder /src/templates /templates
+# Copy the binary and templates, owned by the nonroot user (65532:65532)
+COPY --from=builder --chown=65532:65532 /firescan /firescan
+COPY --from=builder --chown=65532:65532 /src/templates /templates
 
 EXPOSE 8080
 
