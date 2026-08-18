@@ -1,7 +1,8 @@
 services:
   firescan:
     build: .
-    image: firescan:latest
+    image: ghcr.io/its-the-vibe/firescan:latest
+    pull_policy: always
     read_only: true
     ports:
       - "${PORT:-8080}:8080"

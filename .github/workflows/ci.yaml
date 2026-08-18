@@ -2,33 +2,13 @@ name: CI
 
 on:
   push:
-    branches: ["**"]
+    branches: [ main ]
   pull_request:
-    branches: ["**"]
+    branches: [ main ]
 
 jobs:
-  test:
-    name: Test
-    runs-on: ubuntu-latest
+  call-common-ci:
+    uses: its-the-vibe/.github/.github/workflows/common-ci.yaml@main
     permissions:
       contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-      - name: Run tests
-        run: make test
-
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v9
+      packages: write

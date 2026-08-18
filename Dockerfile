@@ -1,5 +1,8 @@
 # Stage 1: build
-FROM golang:1.26.6-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.26.6-alpine AS builder
+
+ARG TARGETOS
+ARG TARGETARCH
 
 WORKDIR /src
 
@@ -12,18 +15,17 @@ COPY main.go ./
 COPY templates/ ./templates/
 
 # Build a fully static binary
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /firescan .
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags="-s -w" -o /firescan .
 
-# Stage 2: minimal runtime image
-FROM scratch
-
-# Copy CA certificates so TLS calls to GCP APIs work
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+# Stage 2: distroless runtime image
+FROM gcr.io/distroless/static-debian13:nonroot
 
 # Copy the binary and templates
 COPY --from=builder /firescan /firescan
 COPY --from=builder /src/templates /templates
 
 EXPOSE 8080
+
+USER nonroot:nonroot
 
 ENTRYPOINT ["/firescan"]
