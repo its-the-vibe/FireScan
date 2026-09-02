@@ -1,6 +1,6 @@
 module github.com/its-the-vibe/firescan
 
-go 1.27.0
+go 1.27.1
 
 require (
 	cloud.google.com/go/firestore v1.25.0
